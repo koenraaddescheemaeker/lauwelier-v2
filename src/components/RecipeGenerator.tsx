@@ -18,6 +18,11 @@ export default function RecipeGenerator({ ingredients }: RecipeGeneratorProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const saveRecipesToSupabase = async (generatedRecipes: Recipe[]) => {
+    if (!supabase) {
+      console.warn('Supabase client not initialized. Skipping save.');
+      return;
+    }
+    
     setSaveStatus('saving');
     try {
       const recipesToInsert = generatedRecipes.map(recipe => ({

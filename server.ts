@@ -86,9 +86,15 @@ async function startServer() {
     const { prompt } = req.body;
     const apiKey = process.env.DEEPINFRA_API_KEY;
 
-    if (!apiKey) return res.status(500).json({ error: "DEEPINFRA_API_KEY is not set" });
+    console.log("🚀 Ontvangen verzoek voor recept-generatie");
+    
+    if (!apiKey) {
+      console.error("❌ DEEPINFRA_API_KEY ontbreekt in environment variables!");
+      return res.status(500).json({ error: "DEEPINFRA_API_KEY is not set" });
+    }
 
     try {
+      console.log("📡 DeepInfra aanroepen met model: meta-llama/Llama-3.3-70B-Instruct");
       const response = await fetch("https://api.deepinfra.com/v1/openai/chat/completions", {
         method: "POST",
         headers: {
@@ -111,10 +117,17 @@ async function startServer() {
         })
       });
 
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error(`❌ DeepInfra API Fout (${response.status}):`, errorData);
+        return res.status(response.status).json({ error: "DeepInfra API error", details: errorData });
+      }
+
       const data = await response.json();
+      console.log("✅ DeepInfra antwoord ontvangen");
       res.json({ text: data.choices?.[0]?.message?.content || "{}" });
     } catch (error) {
-      console.error("DeepInfra Text Error:", error);
+      console.error("❌ DeepInfra Text Error:", error);
       res.status(500).json({ error: "Failed to generate recipes" });
     }
   });
@@ -133,6 +146,12 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    const key = process.env.DEEPINFRA_API_KEY;
+    if (!key) {
+      console.warn("⚠️ DEEPINFRA_API_KEY is missing in environment variables!");
+    } else {
+      console.log(`✅ DEEPINFRA_API_KEY is configured (starts with: ${key.substring(0, 4)}...)`);
+    }
   });
 }
 

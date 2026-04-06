@@ -95,23 +95,24 @@ export default function Pantry({ ingredients, setIngredients }: PantryProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {ingredients.map((item) => (
-          <div key={item.id} className="premium-card flex items-center justify-between group">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-olive-100 rounded-2xl flex items-center justify-center text-olive-600">
-                <Tag size={20} />
+          <div key={item.id} className="premium-card p-3 flex items-center justify-between group hover:border-olive-300 transition-all bg-white/50">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 bg-olive-100 rounded-lg flex items-center justify-center text-olive-600 flex-shrink-0">
+                <Tag size={16} />
               </div>
-              <div>
-                <h3 className="font-semibold text-olive-900">{item.name}</h3>
-                <p className="text-sm text-olive-500">{item.quantity || 'Aantal niet opgegeven'}</p>
+              <div className="min-w-0">
+                <h3 className="font-bold text-olive-900 truncate text-sm">{item.name}</h3>
+                <p className="text-[10px] text-olive-500 truncate">{item.quantity || 'Aantal niet opgegeven'}</p>
               </div>
             </div>
             <button 
               onClick={() => setIngredients(ingredients.filter(i => i.id !== item.id))}
-              className="p-2 text-olive-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+              className="p-2 text-olive-300 hover:text-red-500 transition-colors flex-shrink-0"
+              aria-label="Verwijder ingrediënt"
             >
-              <Trash2 size={18} />
+              <Trash2 size={16} />
             </button>
           </div>
         ))}
