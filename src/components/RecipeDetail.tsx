@@ -78,16 +78,16 @@ export default function RecipeDetail({ recipe, onClose }: RecipeDetailProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-white flex flex-col print:absolute print:inset-0 print:h-auto print:block"
+      className="fixed inset-0 z-[100] bg-white flex flex-col print:relative print:z-0 print:block print:bg-white print:h-auto print:overflow-visible"
     >
-      <div className="relative h-[40vh] sm:h-[50vh] flex-shrink-0 print:h-[30vh] print:break-after-avoid">
+      <div className="relative h-[40vh] sm:h-[50vh] flex-shrink-0 print:h-auto print:block print:mb-8">
         <img 
           src={recipe.imageUrl || `https://picsum.photos/seed/${recipe.id}/1920/1080`} 
           alt={recipe.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover print:h-[10cm] print:rounded-3xl print:shadow-none"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent print:hidden" />
         
         <div className="absolute top-8 right-8 flex items-center gap-3 z-20 print:hidden">
           <button 
@@ -113,9 +113,9 @@ export default function RecipeDetail({ recipe, onClose }: RecipeDetailProps) {
           </button>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-16 max-w-7xl mx-auto w-full">
+        <div className="absolute bottom-0 left-0 right-0 p-8 sm:p-16 max-w-7xl mx-auto w-full print:relative print:p-0 print:mt-4">
           <div className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex gap-3 print:hidden">
               <span className="bg-olive-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-[0.2em]">
                 {recipe.difficulty}
               </span>
@@ -125,119 +125,134 @@ export default function RecipeDetail({ recipe, onClose }: RecipeDetailProps) {
                 </span>
               )}
             </div>
-            <h2 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
+            <h2 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight print:text-olive-900 print:text-4xl print:mb-4">
               {recipe.title}
             </h2>
+            <div className="hidden print:flex gap-4 text-olive-600 font-bold text-sm uppercase tracking-widest">
+              <span>{recipe.difficulty}</span>
+              <span>•</span>
+              <span>{recipe.cookingTime} min</span>
+              <span>•</span>
+              <span>{recipe.servings || '2 personen'}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto bg-white print:overflow-visible print:h-auto">
-        <div className="max-w-7xl mx-auto px-8 sm:px-16 py-16 space-y-20 print:py-8 print:space-y-10">
+        <div className="max-w-7xl mx-auto px-8 sm:px-16 py-16 space-y-20 print:py-0 print:px-0 print:space-y-12">
           {/* Quick Info Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50">
-              <Clock className="text-olive-600" size={28} />
-              <div className="text-center">
-                <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Bereidingstijd</p>
-                <p className="text-2xl font-bold text-olive-900">{recipe.cookingTime} min</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 print:grid-cols-4 print:gap-4">
+            {recipe.cookingTime > 0 && (
+              <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50 print:p-4 print:rounded-2xl print:border-olive-100">
+                <Clock className="text-olive-600 print:w-5 print:h-5" size={28} />
+                <div className="text-center">
+                  <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Tijd</p>
+                  <p className="text-2xl font-bold text-olive-900 print:text-lg">{recipe.cookingTime} min</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50">
-              <Flame className="text-olive-600" size={28} />
-              <div className="text-center">
-                <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Calorieën</p>
-                <p className="text-2xl font-bold text-olive-900">{recipe.calories} kcal</p>
+            )}
+            {recipe.calories > 0 && (
+              <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50 print:p-4 print:rounded-2xl print:border-olive-100">
+                <Flame className="text-olive-600 print:w-5 print:h-5" size={28} />
+                <div className="text-center">
+                  <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Energie</p>
+                  <p className="text-2xl font-bold text-olive-900 print:text-lg">{recipe.calories} kcal</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50">
-              <Euro className="text-olive-600" size={28} />
-              <div className="text-center">
-                <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Kosten</p>
-                <p className="text-2xl font-bold text-olive-900">{recipe.cost}</p>
+            )}
+            {recipe.servings && (
+              <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50 print:p-4 print:rounded-2xl print:border-olive-100">
+                <Utensils className="text-olive-600 print:w-5 print:h-5" size={28} />
+                <div className="text-center">
+                  <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Porties</p>
+                  <p className="text-2xl font-bold text-olive-900 print:text-lg">{recipe.servings}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50">
-              <ChefHat className="text-olive-600" size={28} />
+            )}
+            <div className="bg-olive-50/50 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-3 border border-olive-100/50 print:p-4 print:rounded-2xl print:border-olive-100">
+              <ChefHat className="text-olive-600 print:w-5 print:h-5" size={28} />
               <div className="text-center">
-                <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Moeilijkheid</p>
-                <p className="text-2xl font-bold text-olive-900">{recipe.difficulty}</p>
+                <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest mb-1">Niveau</p>
+                <p className="text-2xl font-bold text-olive-900 print:text-lg">{recipe.difficulty}</p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 print:grid-cols-1 print:gap-8">
             {/* Left Column: Ingredients & Nutrition */}
-            <div className="lg:col-span-4 space-y-12">
-              <div className="space-y-8">
+            <div className="lg:col-span-4 space-y-12 print:space-y-8">
+              <div className="space-y-8 print:space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-olive-900 text-white rounded-2xl flex items-center justify-center">
-                    <Utensils size={24} />
+                  <div className="w-12 h-12 bg-olive-900 text-white rounded-2xl flex items-center justify-center print:w-8 print:h-8 print:rounded-lg">
+                    <Utensils size={24} className="print:w-4 print:h-4" />
                   </div>
-                  <h3 className="text-2xl font-bold text-olive-900">Ingrediënten</h3>
+                  <h3 className="text-2xl font-bold text-olive-900 print:text-xl">Ingrediënten</h3>
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-4 print:space-y-2">
                   {recipe.ingredients.map((ing, i) => (
-                    <li key={i} className="flex justify-between items-center py-4 border-b border-olive-50 group hover:bg-olive-50/30 px-4 -mx-4 rounded-xl transition-colors">
-                      <span className="text-olive-700 font-medium">{ing.name}</span>
-                      <span className="font-bold text-olive-900 bg-olive-100/50 px-3 py-1 rounded-lg text-sm">{ing.amount}</span>
+                    <li key={i} className="flex justify-between items-center py-4 border-b border-olive-50 group hover:bg-olive-50/30 px-4 -mx-4 rounded-xl transition-colors print:py-2 print:px-0 print:mx-0">
+                      <span className="text-olive-700 font-medium print:text-sm">{ing.name}</span>
+                      <span className="font-bold text-olive-900 bg-olive-100/50 px-3 py-1 rounded-lg text-sm print:bg-transparent print:p-0 print:text-xs">{ing.amount}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-olive-900 text-white p-10 rounded-[2.5rem] space-y-8 shadow-xl shadow-olive-900/20">
-                <div className="flex items-center gap-3">
-                  <Info className="text-olive-400" size={20} />
-                  <h3 className="text-xl font-bold">Voedingswaarden</h3>
+              {recipe.nutrients && (recipe.nutrients.protein > 0 || recipe.nutrients.carbs > 0 || recipe.nutrients.fat > 0) && (
+                <div className="bg-olive-900 text-white p-10 rounded-[2.5rem] space-y-8 shadow-xl shadow-olive-900/20 print:bg-white print:text-olive-900 print:p-6 print:rounded-2xl print:border print:border-olive-100 print:shadow-none">
+                  <div className="flex items-center gap-3">
+                    <Info className="text-olive-400 print:text-olive-600" size={20} />
+                    <h3 className="text-xl font-bold print:text-lg">Voedingswaarden</h3>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 print:gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest print:text-olive-500">Eiwit</p>
+                      <p className="text-2xl font-bold print:text-lg">{recipe.nutrients.protein}g</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest print:text-olive-500">Koolh.</p>
+                      <p className="text-2xl font-bold print:text-lg">{recipe.nutrients.carbs}g</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest print:text-olive-500">Vet</p>
+                      <p className="text-2xl font-bold print:text-lg">{recipe.nutrients.fat}g</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest">Eiwit</p>
-                    <p className="text-2xl font-bold">{recipe.nutrients.protein}g</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest">Koolh.</p>
-                    <p className="text-2xl font-bold">{recipe.nutrients.carbs}g</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-olive-400 uppercase font-bold tracking-widest">Vet</p>
-                    <p className="text-2xl font-bold">{recipe.nutrients.fat}g</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Right Column: Instructions & Tips */}
-            <div className="lg:col-span-8 space-y-16">
-              <div className="space-y-10">
-                <h3 className="text-3xl font-bold text-olive-900">Bereidingswijze</h3>
-                <div className="space-y-12">
+            <div className="lg:col-span-8 space-y-16 print:space-y-8">
+              <div className="space-y-10 print:space-y-6">
+                <h3 className="text-3xl font-bold text-olive-900 print:text-xl">Bereidingswijze</h3>
+                <div className="space-y-12 print:space-y-6">
                   {recipe.instructions.map((step, i) => (
-                    <div key={i} className="flex gap-8 group">
+                    <div key={i} className="flex gap-8 group print:gap-4 print:break-inside-avoid">
                       <div className="flex-shrink-0">
-                        <span className="w-12 h-12 bg-olive-50 text-olive-600 rounded-2xl flex items-center justify-center font-bold text-lg group-hover:bg-olive-600 group-hover:text-white transition-all duration-300">
+                        <span className="w-12 h-12 bg-olive-50 text-olive-600 rounded-2xl flex items-center justify-center font-bold text-lg group-hover:bg-olive-600 group-hover:text-white transition-all duration-300 print:w-8 print:h-8 print:text-sm print:rounded-lg print:bg-olive-100 print:text-olive-700">
                           {i + 1}
                         </span>
                       </div>
-                      <div className="space-y-2 pt-2">
-                        <p className="text-lg text-olive-800 leading-relaxed font-medium">{step}</p>
+                      <div className="space-y-2 pt-2 print:pt-1">
+                        <p className="text-lg text-olive-800 leading-relaxed font-medium print:text-sm">{step}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 print:grid-cols-1 print:gap-6">
                 {recipe.chefTips && recipe.chefTips.length > 0 && (
-                  <div className="bg-amber-50/50 border border-amber-100 p-10 rounded-[2.5rem] space-y-6">
+                  <div className="bg-amber-50/50 border border-amber-100 p-10 rounded-[2.5rem] space-y-6 print:p-6 print:rounded-2xl print:break-inside-avoid">
                     <div className="flex items-center gap-3 text-amber-700">
-                      <Lightbulb size={24} />
-                      <h3 className="text-xl font-bold">Chef Tips</h3>
+                      <Lightbulb size={24} className="print:w-5 print:h-5" />
+                      <h3 className="text-xl font-bold print:text-lg">Chef Tips</h3>
                     </div>
-                    <ul className="space-y-4">
+                    <ul className="space-y-4 print:space-y-2">
                       {recipe.chefTips.map((tip, i) => (
-                        <li key={i} className="text-amber-900/80 leading-relaxed flex gap-3">
+                        <li key={i} className="text-amber-900/80 leading-relaxed flex gap-3 print:text-sm">
                           <span className="text-amber-400 mt-1.5">•</span>
                           {tip}
                         </li>
@@ -247,13 +262,13 @@ export default function RecipeDetail({ recipe, onClose }: RecipeDetailProps) {
                 )}
 
                 {recipe.drinkPairing && (
-                  <div className="bg-olive-50/50 border border-olive-100 p-10 rounded-[2.5rem] flex flex-col justify-center gap-6">
-                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-olive-600 shadow-sm">
-                      <Wine size={32} />
+                  <div className="bg-olive-50/50 border border-olive-100 p-10 rounded-[2.5rem] flex flex-col justify-center gap-6 print:p-6 print:rounded-2xl print:break-inside-avoid">
+                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-olive-600 shadow-sm print:w-10 print:h-10 print:rounded-xl print:border print:border-olive-100">
+                      <Wine size={32} className="print:w-6 print:h-6" />
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold text-olive-900 mb-2">Drink Suggestie</h4>
-                      <p className="text-lg text-olive-700 leading-relaxed">{recipe.drinkPairing}</p>
+                      <h4 className="text-xl font-bold text-olive-900 mb-2 print:text-lg">Drink Suggestie</h4>
+                      <p className="text-lg text-olive-700 leading-relaxed print:text-sm">{recipe.drinkPairing}</p>
                     </div>
                   </div>
                 )}
@@ -275,6 +290,19 @@ export default function RecipeDetail({ recipe, onClose }: RecipeDetailProps) {
                   <Printer size={20} />
                   Print dit recept
                 </button>
+              </div>
+
+              {/* Temporary Debug Log Section */}
+              <div className="mt-12 p-6 bg-gray-900 rounded-3xl text-xs font-mono text-green-400 overflow-x-auto print:hidden">
+                <p className="text-gray-500 mb-2 uppercase tracking-widest font-bold">Debug Log (Tijdelijk)</p>
+                <pre>{JSON.stringify({ 
+                  id: recipe.id, 
+                  title: recipe.title, 
+                  ingredientsCount: recipe.ingredients.length,
+                  instructionsCount: recipe.instructions.length,
+                  hasImage: !!recipe.imageUrl,
+                  timestamp: new Date().toISOString()
+                }, null, 2)}</pre>
               </div>
             </div>
           </div>

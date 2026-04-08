@@ -42,3 +42,46 @@
   }
 }
 
+@layer base {
+  @media print {
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+
+    body {
+      background: white !important;
+      color: #1f2115 !important;
+    }
+
+    .print-recipe-container {
+      display: block !important;
+      position: static !important;
+      height: auto !important;
+      overflow: visible !important;
+      width: 100% !important;
+    }
+
+    .print-recipe-image {
+      height: 10cm !important;
+      width: 100% !important;
+      object-fit: cover !important;
+      border-radius: 1.5rem !important;
+      margin-bottom: 2rem !important;
+    }
+
+    .print-grid {
+      display: block !important;
+    }
+
+    .print-break-avoid {
+      break-inside: avoid !important;
+    }
+
+    .print-no-shadow {
+      box-shadow: none !important;
+      border: 1px solid #eceddf !important;
+    }
+  }
+}
+

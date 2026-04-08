@@ -22,6 +22,8 @@ export interface Recipe {
     carbs: number;
     fat: number;
   };
+  servings?: string;
+  orgUrl?: string;
   imageUrl?: string;
   chefTips?: string[];
   drinkPairing?: string;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChefHat, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
 import { Recipe, Ingredient } from '../types';
 import { generateRecipesFromIngredients } from '../services/geminiService';
@@ -13,13 +13,21 @@ interface RecipeGeneratorProps {
 
 export default function RecipeGenerator({ ingredients }: RecipeGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
+  // Immediate generation when component mounts if ingredients are available
+  useEffect(() => {
+    if (ingredients.length > 0 && recipes.length === 0 && !isGenerating) {
+      generateRecipes();
+    }
+  }, [ingredients.length]);
+
   const saveRecipesToSupabase = async (generatedRecipes: Recipe[]) => {
     if (!supabase) {
-      console.warn('Supabase client not initialized. Skipping save.');
+      console.warn('⚠️ Supabase client niet geïnitialiseerd. Controleer je VITE_SUPABASE_URL en KEY.');
       return;
     }
     
@@ -32,23 +40,36 @@ export default function RecipeGenerator({ ingredients }: RecipeGeneratorProps) {
         ingredients: recipe.ingredients.map(i => `${i.amount} ${i.name}`).join('\n'),
         image: recipe.imageUrl,
         total_time: recipe.cookingTime.toString(),
+        perform_time: recipe.cookingTime.toString(),
+        recipe_yield: recipe.servings || '2 personen',
+        rating: '5.0', // Default rating for AI recipes
         is_vegan: true,
         chef_tip: recipe.chefTips?.join('\n'),
         recipe_instructions: recipe.instructions,
         recipe_ingredient: recipe.ingredients,
         category: 'AI Generated',
-        cuisine: 'Vegan'
+        cuisine: 'Vegan',
+        org_url: recipe.orgUrl || null
       }));
 
-      const { error } = await supabase
-        .from('recepten')
-        .insert(recipesToInsert);
+      console.log('📡 Poging tot opslaan in Supabase (tabel: recepten):', recipesToInsert);
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('recepten')
+        .insert(recipesToInsert)
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase Insert Fout:', error);
+        setSaveStatus('error');
+        return;
+      }
+
+      console.log('✅ Recepten succesvol opgeslagen:', data);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
-      console.error('Error saving recipes to Supabase:', error);
+      console.error('❌ Onverwachte fout bij opslaan in Supabase:', error);
       setSaveStatus('error');
     }
   };
@@ -58,9 +79,22 @@ export default function RecipeGenerator({ ingredients }: RecipeGeneratorProps) {
     setIsGenerating(true);
     setRecipes([]);
     
-    const generatedRecipes = await generateRecipesFromIngredients(ingredients);
+    const generatedRecipes = await generateRecipesFromIngredients(ingredients, 1);
     setRecipes(generatedRecipes);
     setIsGenerating(false);
+
+    if (generatedRecipes.length > 0) {
+      await saveRecipesToSupabase(generatedRecipes);
+    }
+  };
+
+  const generateMoreRecipes = async () => {
+    if (ingredients.length === 0) return;
+    setIsGeneratingMore(true);
+    
+    const generatedRecipes = await generateRecipesFromIngredients(ingredients, 1);
+    setRecipes(prev => [...prev, ...generatedRecipes]);
+    setIsGeneratingMore(false);
 
     if (generatedRecipes.length > 0) {
       await saveRecipesToSupabase(generatedRecipes);
@@ -77,15 +111,15 @@ export default function RecipeGenerator({ ingredients }: RecipeGeneratorProps) {
       <div className="premium-card bg-olive-900 text-white border-none p-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
         <div className="relative z-10 space-y-4 max-w-lg">
           <h3 className="text-2xl font-bold">Klaar voor culinaire inspiratie?</h3>
-          <p className="text-olive-200">Onze AI analyseert je ingrediënten en stelt 3 unieke, plantaardige recepten voor.</p>
+          <p className="text-olive-200">Onze AI analyseert je ingrediënten en stelt een uniek, plantaardig recept voor.</p>
           <div className="flex items-center gap-4">
             <button 
               onClick={generateRecipes}
-              disabled={isGenerating || ingredients.length === 0}
+              disabled={isGenerating || isGeneratingMore || ingredients.length === 0}
               className="bg-white text-olive-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 transition-all hover:bg-olive-100 active:scale-95 disabled:opacity-50"
             >
               {isGenerating ? <Loader2 className="animate-spin" size={24} /> : <Sparkles size={24} />}
-              {isGenerating ? 'Recepten genereren...' : 'Genereer Recepten'}
+              {isGenerating ? 'Recept genereren...' : 'Genereer Recept'}
             </button>
 
             <AnimatePresence>
@@ -123,14 +157,27 @@ export default function RecipeGenerator({ ingredients }: RecipeGeneratorProps) {
       </div>
 
       {recipes.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recipes.map((recipe) => (
-            <RecipeCard 
-              key={recipe.id} 
-              recipe={recipe} 
-              onClick={() => setSelectedRecipe(recipe)} 
-            />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recipes.map((recipe) => (
+              <RecipeCard 
+                key={recipe.id} 
+                recipe={recipe} 
+                onClick={() => setSelectedRecipe(recipe)} 
+              />
+            ))}
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              onClick={generateMoreRecipes}
+              disabled={isGeneratingMore || ingredients.length === 0}
+              className="group flex items-center gap-3 bg-olive-100 text-olive-900 px-8 py-4 rounded-2xl font-bold transition-all hover:bg-olive-200 active:scale-95 disabled:opacity-50"
+            >
+              {isGeneratingMore ? <Loader2 className="animate-spin" size={20} /> : <Sparkles className="text-olive-600 group-hover:rotate-12 transition-transform" size={20} />}
+              {isGeneratingMore ? 'Extra recept zoeken...' : 'Nog een extra recept?'}
+            </button>
+          </div>
         </div>
       )}
 

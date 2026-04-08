@@ -17,16 +17,36 @@ import Pantry from './components/Pantry';
 import RecipeGenerator from './components/RecipeGenerator';
 import Favorites from './components/Favorites';
 import Settings from './components/Settings';
+import Admin from './components/Admin';
+import Login from './components/Login';
 import { Ingredient } from './types';
+import { supabase } from './lib/supabase';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'pantry' | 'generate' | 'favorites' | 'settings'>('pantry');
+  const [activeTab, setActiveTab] = useState<'pantry' | 'generate' | 'favorites' | 'settings' | 'admin'>('pantry');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { id: '1', name: 'Kikkererwten', quantity: '2 blikken', category: 'Peulvruchten' },
     { id: '2', name: 'Spinazie', quantity: '200g', category: 'Groenten' },
     { id: '3', name: 'Kokosmelk', quantity: '400ml', category: 'Voorraadkast' },
   ]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -84,6 +104,22 @@ export default function App() {
               transition={{ duration: 0.3 }}
             >
               <Settings />
+            </motion.div>
+          )}
+
+          {activeTab === 'admin' && (
+            <motion.div
+              key="admin"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {isAuthenticated ? (
+                <Admin />
+              ) : (
+                <Login onLogin={() => setIsAuthenticated(true)} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>

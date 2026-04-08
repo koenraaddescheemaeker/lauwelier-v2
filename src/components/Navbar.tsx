@@ -14,10 +14,11 @@ export default function Navbar({ activeTab, setActiveTab, isMenuOpen, setIsMenuO
     { id: 'generate', label: 'Recepten', icon: Sparkles },
     { id: 'favorites', label: 'Favorieten', icon: Heart },
     { id: 'settings', label: 'Instellingen', icon: SettingsIcon },
+    { id: 'admin', label: 'Admin', icon: ChefHat },
   ];
 
   return (
-    <header className="sticky top-0 z-[60] bg-olive-50/80 backdrop-blur-md border-b border-olive-100">
+    <header className="sticky top-0 z-[100] bg-olive-50/80 backdrop-blur-md border-b border-olive-100">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-olive-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-olive-200">
@@ -56,25 +57,25 @@ export default function Navbar({ activeTab, setActiveTab, isMenuOpen, setIsMenuO
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - Verplaatst naar buiten de container voor betere positionering */}
       <AnimatePresence>
         {isMenuOpen && (
-          <>
+          <div className="fixed inset-0 z-[110] md:hidden">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-[75%] max-w-xs bg-white z-50 shadow-2xl md:hidden flex flex-col h-full"
+              className="absolute top-0 right-0 bottom-0 w-[80%] max-w-xs bg-white/90 backdrop-blur-xl shadow-2xl flex flex-col h-screen"
             >
-              <div className="p-5 flex items-center justify-between border-b border-olive-50">
+              <div className="p-5 flex items-center justify-between border-b border-olive-100/50">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-olive-600 rounded-lg flex items-center justify-center text-white">
                     <ChefHat size={18} />
@@ -83,7 +84,7 @@ export default function Navbar({ activeTab, setActiveTab, isMenuOpen, setIsMenuO
                 </div>
                 <button 
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 hover:bg-olive-50 rounded-lg text-olive-500"
+                  className="p-2 hover:bg-olive-100/50 rounded-lg text-olive-500"
                 >
                   <X size={20} />
                 </button>
@@ -97,31 +98,31 @@ export default function Navbar({ activeTab, setActiveTab, isMenuOpen, setIsMenuO
                       setActiveTab(item.id);
                       setIsMenuOpen(false);
                     }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                    className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all ${
                       activeTab === item.id 
                         ? 'bg-olive-600 text-white shadow-md shadow-olive-200' 
-                        : 'text-olive-700 hover:bg-olive-50'
+                        : 'text-olive-700 hover:bg-olive-100/50'
                     }`}
                   >
-                    <item.icon size={18} />
-                    <span className="font-semibold text-sm">{item.label}</span>
+                    <item.icon size={20} />
+                    <span className="font-bold text-base">{item.label}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="p-4 border-t border-olive-50 bg-olive-50/30">
+              <div className="p-6 border-t border-olive-100/50 bg-olive-50/50">
                 <button 
                   onClick={() => {
                     setActiveTab('generate');
                     setIsMenuOpen(false);
                   }}
-                  className="w-full btn-primary py-3 text-sm"
+                  className="w-full btn-primary py-4 text-base font-bold"
                 >
                   Start Koken
                 </button>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </header>

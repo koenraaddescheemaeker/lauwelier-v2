@@ -1,7 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Camera, Mic, Search, Tag, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Plus, 
+  Camera, 
+  Loader2, 
+  X,
+  Sparkles
+} from 'lucide-react';
 import { Ingredient } from '../types';
 import { analyzeImageForIngredients } from '../services/geminiService';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface PantryProps {
   ingredients: Ingredient[];
@@ -9,32 +16,36 @@ interface PantryProps {
 }
 
 export default function Pantry({ ingredients, setIngredients }: PantryProps) {
-  const [newItem, setNewItem] = useState('');
+  const [newItemName, setNewItemName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mainTab, setMainTab] = useState<'basis' | 'culinair' | 'fusion'>('basis');
+  const [subTab, setSubTab] = useState<'koelkast' | 'gerecht' | 'wereld'>('koelkast');
+  const [diet, setDiet] = useState<'vegan' | 'veggie'>('vegan');
 
-  const addIngredient = (name: string) => {
-    if (!name.trim()) return;
-    const ingredient: Ingredient = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: name,
-      category: 'Overig'
-    };
-    setIngredients([ingredient, ...ingredients]);
-    setNewItem('');
+  const handleAdd = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (newItemName.trim()) {
+      const ingredient: Ingredient = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: newItemName.trim(),
+        category: 'Handmatig'
+      };
+      setIngredients([ingredient, ...ingredients]);
+      setNewItemName('');
+    }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     setIsAnalyzing(true);
     const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = (reader.result as string).split(',')[1];
-      const recognizedIngredients = await analyzeImageForIngredients(base64String);
+    reader.onload = async (event) => {
+      const base64 = (event.target?.result as string).split(',')[1];
+      const detected = await analyzeImageForIngredients(base64);
       
-      const newIngredients = recognizedIngredients.map(name => ({
+      const newIngredients = detected.map(name => ({
         id: Math.random().toString(36).substr(2, 9),
         name: name,
         category: 'Herkenning'
@@ -46,76 +57,147 @@ export default function Pantry({ ingredients, setIngredients }: PantryProps) {
     reader.readAsDataURL(file);
   };
 
-  return (
-    <div className="space-y-8">
-      <header className="flex flex-col gap-2">
-        <h2 className="text-3xl font-bold text-olive-900">Mijn Voorraadkast</h2>
-        <p className="text-olive-500">Beheer je ingrediënten en voorkom verspilling.</p>
-      </header>
+  const removeIngredient = (id: string) => {
+    setIngredients(ingredients.filter(i => i.id !== id));
+  };
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 relative">
-          <input 
-            type="text" 
-            placeholder="Voeg ingrediënt toe (bijv. '3 wortels')..."
-            className="w-full bg-white border border-olive-100 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-olive-500/20 transition-all"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addIngredient(newItem)}
-          />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-olive-400" size={20} />
+  return (
+    <div className="max-w-4xl mx-auto space-y-12 pb-20">
+      {/* Main Navigation Tabs */}
+      <div className="flex justify-center border-b border-olive-100">
+        <div className="flex gap-12 sm:gap-24">
+          {(['basis', 'culinair', 'fusion'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setMainTab(tab)}
+              className={`pb-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all relative ${
+                mainTab === tab ? 'text-olive-900' : 'text-olive-300 hover:text-olive-500'
+              }`}
+            >
+              {tab}
+              {mainTab === tab && (
+                <motion.div 
+                  layoutId="mainTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
+                />
+              )}
+            </button>
+          ))}
         </div>
-        <div className="flex gap-2">
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload}
-          />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isAnalyzing}
-            className="btn-secondary flex items-center gap-2 px-4 disabled:opacity-50"
+      </div>
+
+      {/* Sub Navigation & Surprise Button */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="flex gap-8 sm:gap-12">
+          {(['koelkast', 'gerecht', 'wereld'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setSubTab(tab)}
+              className={`text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${
+                subTab === tab ? 'text-olive-900' : 'text-olive-300 hover:text-olive-500'
+              }`}
+            >
+              {tab}
+              {subTab === tab && (
+                <motion.div 
+                  layoutId="subTabUnderline"
+                  className="absolute -bottom-1 left-0 right-0 h-0.5 bg-green-500"
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        <button className="flex items-center gap-2 bg-green-50 text-green-600 px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-green-100 transition-all">
+          <Sparkles size={14} className="text-yellow-500" />
+          Verras me
+        </button>
+      </div>
+
+      {/* Diet Toggle */}
+      <div className="flex justify-center">
+        <div className="bg-olive-50/50 p-1 rounded-full flex border border-olive-100 w-fit">
+          <button
+            onClick={() => setDiet('vegan')}
+            className={`px-8 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+              diet === 'vegan' ? 'bg-green-700 text-white shadow-lg' : 'text-olive-400 hover:text-olive-600'
+            }`}
           >
-            {isAnalyzing ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
-            <span className="hidden sm:inline">{isAnalyzing ? 'Analyseren...' : 'Scan Foto'}</span>
+            Vegan
           </button>
-          <button className="btn-secondary flex items-center gap-2 px-4">
-            <Mic size={20} />
-            <span className="hidden sm:inline">Spraak</span>
-          </button>
-          <button 
-            onClick={() => addIngredient(newItem)}
-            className="btn-primary flex items-center gap-2"
+          <button
+            onClick={() => setDiet('veggie')}
+            className={`px-8 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+              diet === 'veggie' ? 'bg-green-700 text-white shadow-lg' : 'text-olive-400 hover:text-olive-600'
+            }`}
           >
-            <Plus size={20} />
-            <span>Voeg toe</span>
+            Veggie
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {ingredients.map((item) => (
-          <div key={item.id} className="premium-card p-3 flex items-center justify-between group hover:border-olive-300 transition-all bg-white/50">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 bg-olive-100 rounded-lg flex items-center justify-center text-olive-600 flex-shrink-0">
-                <Tag size={16} />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-olive-900 truncate text-sm">{item.name}</h3>
-                <p className="text-[10px] text-olive-500 truncate">{item.quantity || 'Aantal niet opgegeven'}</p>
-              </div>
+      {/* Main Input Area */}
+      <div className="relative group">
+        <div className="premium-card !p-2 !rounded-[2.5rem] bg-white shadow-xl shadow-olive-900/5 border-olive-100/50">
+          <form onSubmit={handleAdd} className="flex items-center p-2">
+            <input
+              type="text"
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              placeholder="In huis..."
+              className="flex-1 bg-transparent border-none focus:ring-0 px-6 py-4 text-xl text-olive-900 placeholder:text-olive-200 italic font-light"
+            />
+            <div className="flex items-center gap-2 pr-2">
+              <label className="p-4 text-olive-300 hover:text-olive-600 cursor-pointer transition-colors">
+                <Camera size={24} />
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </label>
+              <button
+                type="submit"
+                disabled={!newItemName.trim()}
+                className="w-14 h-14 bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-900/20 hover:bg-green-800 transition-all active:scale-95 disabled:opacity-30"
+              >
+                {isAnalyzing ? <Loader2 className="animate-spin" size={24} /> : <Plus size={28} />}
+              </button>
             </div>
-            <button 
-              onClick={() => setIngredients(ingredients.filter(i => i.id !== item.id))}
-              className="p-2 text-olive-300 hover:text-red-500 transition-colors flex-shrink-0"
-              aria-label="Verwijder ingrediënt"
+          </form>
+        </div>
+      </div>
+
+      {/* Ingredient Tags */}
+      <div className="flex flex-wrap justify-center gap-3">
+        <AnimatePresence mode="popLayout">
+          {ingredients.map((ingredient) => (
+            <motion.div
+              key={ingredient.id}
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="group flex items-center gap-2 bg-white border border-olive-100 px-5 py-2.5 rounded-full shadow-sm hover:border-olive-200 transition-all"
             >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-olive-900">
+                {ingredient.name}
+              </span>
+              <button
+                onClick={() => removeIngredient(ingredient.id)}
+                className="text-olive-200 hover:text-red-500 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Chef Section Footer */}
+      <div className="pt-12 text-center">
+        <div className="inline-flex flex-col items-center gap-4">
+          <div className="h-px w-24 bg-olive-200" />
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-olive-900">
+            Vraag het aan de chef
+          </h4>
+        </div>
       </div>
     </div>
   );

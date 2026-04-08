@@ -1,0 +1,16 @@
+services:
+  lauwelier-app:
+    build: .
+    container_name: lauwelier-v2
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DEEPINFRA_API_KEY=${DEEPINFRA_API_KEY}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: always
+
+# Opmerking voor Coolify: 
+# Je kunt deze variabelen instellen in de Coolify interface onder 'Environment Variables'.

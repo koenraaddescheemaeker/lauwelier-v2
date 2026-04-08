@@ -29,8 +29,8 @@ async function startServer() {
         },
         body: JSON.stringify({
           prompt,
-          size: "1024x1024",
           model: "stabilityai/sdxl-turbo",
+          size: "1024x1024",
           n: 1
         })
       });
@@ -94,7 +94,7 @@ async function startServer() {
     }
 
     try {
-      console.log("📡 DeepInfra aanroepen met model: meta-llama/Llama-3.3-70B-Instruct");
+      console.log("📡 DeepInfra aanroepen met model: meta-llama/Llama-3.3-70B-Instruct-Turbo");
       const response = await fetch("https://api.deepinfra.com/v1/openai/chat/completions", {
         method: "POST",
         headers: {
@@ -102,11 +102,11 @@ async function startServer() {
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "meta-llama/Llama-3.3-70B-Instruct",
+          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
           messages: [
             {
               role: "system",
-              content: "Je bent een professionele veganistische chef-kok. Je antwoordt ALTIJD met uitsluitend geldige JSON. Retourneer een JSON object met een 'recipes' array."
+              content: "Je bent een professionele veganistische chef-kok. Je antwoordt ALTIJD met uitsluitend geldige JSON. Gebruik GEEN markdown code blocks (zoals ```json). Retourneer een JSON object met een 'recipes' array."
             },
             {
               role: "user",
@@ -129,6 +129,128 @@ async function startServer() {
     } catch (error) {
       console.error("❌ DeepInfra Text Error:", error);
       res.status(500).json({ error: "Failed to generate recipes" });
+    }
+  });
+
+  app.post("/api/scrape-recipe", async (req, res) => {
+    const { url } = req.body;
+    const apiKey = process.env.DEEPINFRA_API_KEY;
+
+    if (!apiKey) return res.status(500).json({ error: "DEEPINFRA_API_KEY is not set" });
+
+    try {
+      console.log(`📡 Scraper start voor URL: ${url}`);
+      
+      // 1. Fetch the page content with a User-Agent to avoid being blocked
+      const pageResponse = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      
+      if (!pageResponse.ok) {
+        throw new Error(`HTTP error! status: ${pageResponse.status}`);
+      }
+      
+      const html = await pageResponse.text();
+      
+      // 2. Try to find JSON-LD (Schema.org Recipe)
+      const jsonLdMatches = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
+      let recipeJsonLd = null;
+      
+      if (jsonLdMatches) {
+        for (const match of jsonLdMatches) {
+          try {
+            const content = match.replace(/<script type="application\/ld\+json">/i, '').replace(/<\/script>/i, '');
+            const parsed = JSON.parse(content);
+            
+            // Handle arrays or single objects
+            const items = Array.isArray(parsed) ? parsed : [parsed];
+            for (const item of items) {
+              // Look for @type: Recipe or a graph containing a Recipe
+              if (item['@type'] === 'Recipe') {
+                recipeJsonLd = item;
+                break;
+              }
+              if (item['@graph']) {
+                const recipeInGraph = item['@graph'].find((g: any) => g['@type'] === 'Recipe');
+                if (recipeInGraph) {
+                  recipeJsonLd = recipeInGraph;
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            continue;
+          }
+          if (recipeJsonLd) break;
+        }
+      }
+
+      // 3. Prepare content for Gemini
+      let contextForAi = "";
+      if (recipeJsonLd) {
+        console.log("✅ JSON-LD Recept gevonden!");
+        contextForAi = JSON.stringify(recipeJsonLd);
+      } else {
+        console.log("⚠️ Geen JSON-LD gevonden, gebruik HTML tekst extractie.");
+        contextForAi = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+                           .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, "")
+                           .replace(/<[^>]+>/g, ' ')
+                           .substring(0, 15000);
+      }
+
+      // 4. Use AI to extract/translate the recipe
+      const response = await fetch("https://api.deepinfra.com/v1/openai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "Qwen/Qwen2.5-72B-Instruct",
+          messages: [
+            {
+              role: "system",
+              content: "Je bent een expert in het extraheren van recepten. Je antwoordt ALTIJD met uitsluitend geldige JSON. Gebruik GEEN markdown code blocks."
+            },
+            {
+              role: "user",
+              content: `Extraheer het recept uit deze data en vertaal het naar het Nederlands (België). Zorg dat het 100% veganistisch is.
+              
+              Data: ${contextForAi}
+              
+              Retourneer dit JSON formaat:
+              {
+                "title": "string",
+                "description": "string",
+                "ingredients": [{ "name": "string", "amount": "string" }],
+                "instructions": ["string"],
+                "cookingTime": number,
+                "servings": "string (bijv. 2 personen)",
+                "difficulty": "Eenvoudig" | "Gemiddeld" | "Chef",
+                "cost": "Budget" | "Gemiddeld" | "Premium",
+                "calories": number,
+                "nutrients": { "protein": number, "carbs": number, "fat": number },
+                "chefTips": ["string"]
+              }`
+            }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error("AI response was empty");
+      }
+      
+      res.json({ text: content });
+    } catch (error: any) {
+      console.error("❌ Scrape Error:", error.message);
+      res.status(500).json({ error: error.message || "Failed to scrape recipe" });
     }
   });
 
