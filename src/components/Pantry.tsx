@@ -7,7 +7,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Ingredient } from '../types';
-import { analyzeImageForIngredients } from '../services/geminiService';
+import { analyzeImageForIngredients } from '../services/deepInfraService';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface PantryProps {

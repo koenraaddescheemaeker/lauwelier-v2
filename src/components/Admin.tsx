@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Globe, Loader2, CheckCircle2, AlertCircle, Save, LogOut, Trash2, ExternalLink, ChefHat } from 'lucide-react';
 import { Recipe } from '../types';
-import { scrapeRecipeFromUrl } from '../services/geminiService';
+import { scrapeRecipeFromUrl } from '../services/deepInfraService';
 import { RecipeCard } from './RecipeCard';
 import { supabase } from '../lib/supabase';
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChefHat, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
 import { Recipe, Ingredient } from '../types';
-import { generateRecipesFromIngredients } from '../services/geminiService';
+import { generateRecipesFromIngredients } from '../services/deepInfraService';
 import { RecipeCard } from './RecipeCard';
 import RecipeDetail from './RecipeDetail';
 import { AnimatePresence, motion } from 'motion/react';

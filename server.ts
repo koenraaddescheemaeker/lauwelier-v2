@@ -187,7 +187,7 @@ async function startServer() {
         }
       }
 
-      // 3. Prepare content for Gemini
+      // 3. Prepare content for AI
       let contextForAi = "";
       if (recipeJsonLd) {
         console.log("✅ JSON-LD Recept gevonden!");
